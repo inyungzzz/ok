@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 9187)
-Total output lines: 696
-
 import './style.css';
 import ortWasmModuleUrl from 'onnxruntime-web/ort-wasm-simd-threaded.asyncify.mjs?url';
 import ortWasmBinaryUrl from 'onnxruntime-web/ort-wasm-simd-threaded.asyncify.wasm?url';
@@ -307,7 +304,23 @@ async function separateAudio() {
   els.separate.disabled = true;
   els.cancel.classList.remove('hidden');
   els.progress.classList.remove('hidden');
-  setNotice('分離音軌會使用裝置的記憶體與運算資源…187 tokens truncated…nProgress: ({ progress, currentSegment, totalSegments }) => {
+  setNotice('分離音軌會使用裝置的記憶體與運算資源。');
+  try {
+    const model = await ensureModel();
+    if (cancelRequested) throw new Error('已取消分離。');
+    setProgress(34, '準備音訊', '正在分析立體聲波形');
+    const left = audioBuffer.getChannelData(0);
+    const right = audioBuffer.numberOfChannels > 1 ? audioBuffer.getChannelData(1) : left;
+    let output;
+    try {
+      output = await model.separate(left, right);
+    } catch (error) {
+      if (!usingWebGpu || !ProcessorClass || !ortRuntime) throw error;
+      els.backend.textContent = 'WASM CPU · GPU 回退';
+      setProgress(35, '切換相容模式', '此裝置的 WebGPU 無法執行部分模型運算，改用 WASM CPU');
+      const fallback = new ProcessorClass({
+        ort: ortRuntime,
+        onProgress: ({ progress, currentSegment, totalSegments }) => {
           if (cancelRequested) throw new Error('已取消分離。');
           setProgress(35 + progress * 63, 'AI 分離音軌', `處理片段 ${currentSegment} / ${totalSegments} · WASM CPU`);
         },
