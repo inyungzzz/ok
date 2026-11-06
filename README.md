@@ -45,4 +45,3 @@ Cross-Origin-Embedder-Policy: require-corp
 ## 授權
 
 應用程式程式碼使用 MIT License。`demucs-web` 採 MIT；ONNX Runtime Web 與 SoundTouchJS 的授權請參閱各自套件。
-
